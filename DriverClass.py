@@ -41,7 +41,6 @@ class DriverNode:
         # self.clientSocket.send(message.encode())
         # self.response = self.clientSocket.recv(1024).decode()
         self.response = requests.get("http://localhost:8080/ping")
-        print(self.response)
         end = time.time()
         print(self.response)
         latency = end - start
@@ -56,8 +55,6 @@ class DriverNode:
         self.metrics["mean_latency"] = self.totalLatency / len(self.latencies)
         self.metrics["median_latency"] = statistics.median(self.latencies)
 
-    def disconnect(self):
-        self.clientSocket.close()
 
     def register(self):
         self.producer.send("register", json.dumps({
@@ -94,7 +91,6 @@ class DriverNode:
     def startTest(self, delay = 0):
         # self.connect()
         self.register()
-        start = time.localtime()
         self.scheduler.add_job(self.sendHeatbeat, 'interval', seconds = 1)
         while True:
             self.request("Hi")
