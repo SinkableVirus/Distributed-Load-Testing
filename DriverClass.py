@@ -5,6 +5,7 @@ import socket
 import time
 import statistics
 import threading
+import requests
 # import schedule
 from apscheduler.schedulers.background import BackgroundScheduler
 from kafka import KafkaProducer
@@ -14,6 +15,7 @@ from kafka import KafkaConsumer
 class DriverNode:
     def __init__(self):
         self.id = random.randint(1, 1000)
+        self.IP = "127.0.0.1"
         self.metrics = {
             "mean_latency": 0,
             "median_latency": 0,
@@ -27,17 +29,19 @@ class DriverNode:
         self.scheduler = BackgroundScheduler()
         self.scheduler.start()
 
-    def connect(self):
-        self.host = socket.gethostname()
-        self.serverPort = 8080
-        self.clientSocket = socket.socket()
-        self.clientSocket.connect((self.host, self.serverPort))
-        self.IP = self.clientSocket.getsockname()[0] + ":" + str(self.clientSocket.getsockname()[1])
+    # def connect(self):
+    #     self.host = socket.gethostname()
+    #     self.serverPort = 8080
+    #     self.clientSocket = socket.socket()
+    #     self.clientSocket.connect((self.host, self.serverPort))
+    #     self.IP = self.clientSocket.getsockname()[0] + ":" + str(self.clientSocket.getsockname()[1])
 
     def request(self, message):
         start = time.time()
-        self.clientSocket.send(message.encode())
-        self.response = self.clientSocket.recv(1024).decode()
+        # self.clientSocket.send(message.encode())
+        # self.response = self.clientSocket.recv(1024).decode()
+        self.response = requests.get("http://localhost:8080/ping")
+        print(self.response)
         end = time.time()
         print(self.response)
         latency = end - start
@@ -88,7 +92,7 @@ class DriverNode:
         print("sent", self.id)
 
     def startTest(self, delay = 0):
-        self.connect()
+        # self.connect()
         self.register()
         start = time.localtime()
         self.scheduler.add_job(self.sendHeatbeat, 'interval', seconds = 1)
