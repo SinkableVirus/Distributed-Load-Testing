@@ -68,7 +68,7 @@ class OrchestratorNode:
             if message.topic == "register":
                 self.metrics[data["node_id"]] = {}
                 self.activeNodeCount += 1
-                print(self.activeNodeCount)
+                print('Driver node', data['node_id'], 'registered')
                 
             if message.topic == "metrics":
                 self.metrics[data["node_id"]] = data["metrics"]
