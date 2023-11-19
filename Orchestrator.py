@@ -67,7 +67,6 @@ class OrchestratorNode:
 
             if message.topic == "register":
                 self.metrics[data["node_id"]] = {}
-                print("here")
                 self.activeNodeCount += 1
                 print(self.activeNodeCount)
                 
@@ -79,7 +78,6 @@ class OrchestratorNode:
                 if data["heartbeat"] == "NO":
                     self.activeNodeCount -= 1
                     if self.activeNodeCount == 0:
-                        print("lmao")
                         self.printMetrics()
                         exit(0)
 
