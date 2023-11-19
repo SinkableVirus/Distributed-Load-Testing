@@ -19,6 +19,7 @@ class OrchestratorNode:
         self.scheduler2 = BackgroundScheduler()
         self.scheduler2.start()
 
+
     def testConfig(self):
         self.testID = random.randint(0, 100)
         testType = input("Enter the test type (A/T): ")
@@ -39,6 +40,7 @@ class OrchestratorNode:
         }).encode("utf-8"))
         self.producer.flush()
 
+
     def trigger(self):
         self.producer.send("trigger", json.dumps({
             "test_id": self.testID,
@@ -46,8 +48,10 @@ class OrchestratorNode:
         }).encode("utf-8"))
         self.producer.flush()
 
+
     def printMetrics(self):
         print(json.dumps(self.metrics, indent = 4))
+    
     
     def checkHeartbeat(self):
         for i in self.heartbeat:
@@ -76,6 +80,7 @@ class OrchestratorNode:
                     self.activeNodeCount -= 1
                     if self.activeNodeCount == 0:
                         print("lmao")
+                        self.printMetrics()
                         exit(0)
 
 

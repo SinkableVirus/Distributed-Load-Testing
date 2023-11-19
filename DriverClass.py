@@ -32,6 +32,7 @@ class DriverNode:
         self.scheduler2 = BackgroundScheduler()
         self.scheduler2.start()
 
+
     def request(self, message):
         start = time.time()
         self.response = requests.get(self.serverIP)
@@ -58,6 +59,7 @@ class DriverNode:
         }).encode("utf-8"))
         self.producer.flush()
 
+
     def publishMetrics(self):
         self.producer.send("metrics", json.dumps({
             "node_id": self.id,
@@ -73,12 +75,14 @@ class DriverNode:
         }).encode("utf-8"))
         self.producer.flush()
 
+
     def sendHeatbeat(self):
         self.producer.send("heartbeat", json.dumps({
             "node_id": self.id,
             "heartbeat": "YES"
         }).encode("utf-8"))
         self.producer.flush()
+
 
     def startTest(self, delay = 0):
         # self.connect()
