@@ -8,12 +8,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 class OrchestratorNode:
     def __init__(self):
+        self.stop = 0
         self.metrics = {}
         self.heartbeat = {}
+        self.activeNodeCount = 0
         self.producer = KafkaProducer(bootstrap_servers = "localhost:9092")
         self.consumer = KafkaConsumer("register", "metrics", "heartbeat")
-        self.scheduler = BackgroundScheduler()
-        self.scheduler.start()
+        self.scheduler1 = BackgroundScheduler()
+        self.scheduler1.start()
         self.scheduler2 = BackgroundScheduler()
         self.scheduler2.start()
 
@@ -58,30 +60,32 @@ class OrchestratorNode:
     def listen(self):
         for message in self.consumer:
             data = json.loads(message.value.decode("utf-8"))
+
             if message.topic == "register":
                 self.metrics[data["node_id"]] = {}
-            
+                print("here")
+                self.activeNodeCount += 1
+                print(self.activeNodeCount)
+                
             if message.topic == "metrics":
                 self.metrics[data["node_id"]] = data["metrics"]
 
             if message.topic == "heartbeat":
-                # if data["node_id"] not in self.checkHeartbeat:
                 self.heartbeat[data["node_id"]] = time.time()
-                # else:
-                #     if (time.time() - self.checkHeartbeat[data["node_id"]]) > 1.5:
-                #         print(f'Received heartbeat from node {data["node_id"]} late')
-                #     else:
-                #         print(f'Received heartbeat from node {data["node_id"]} on time')
-                #     self.checkHeartbeat[data["node_id"]] = time.time()
-
-                
-
+                if data["heartbeat"] == "NO":
+                    self.activeNodeCount -= 1
+                    if self.activeNodeCount == 0:
+                        print("lmao")
+                        exit(0)
 
 
 if __name__ == "__main__":
-    orchestrator = OrchestratorNode()
-    orchestrator.testConfig()
-    orchestrator.trigger()
-    orchestrator.scheduler.add_job(orchestrator.printMetrics, 'interval', seconds = 1)
-    orchestrator.scheduler2.add_job(orchestrator.checkHeartbeat, 'interval', seconds = 1)
-    orchestrator.listen()
+    try:
+        orchestrator = OrchestratorNode()
+        orchestrator.testConfig()
+        orchestrator.trigger()
+        orchestrator.job1 = orchestrator.scheduler1.add_job(orchestrator.printMetrics, 'interval', seconds = 1)
+        orchestrator.job2 = orchestrator.scheduler2.add_job(orchestrator.checkHeartbeat, 'interval', seconds = 1)
+        orchestrator.listen()
+    except KeyboardInterrupt:
+        print("Orchestrator Stopped")

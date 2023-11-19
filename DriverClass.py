@@ -6,7 +6,7 @@ import time
 import statistics
 import threading
 import requests
-# import schedule
+import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from kafka import KafkaProducer
 from kafka import KafkaConsumer
@@ -27,23 +27,15 @@ class DriverNode:
         self.totalLatency = 0
         self.producer = KafkaProducer(bootstrap_servers = "localhost:9092")
         self.consumer = KafkaConsumer("test_config", "trigger")
-        self.scheduler = BackgroundScheduler()
-        self.scheduler.start()
-
-    # def connect(self):
-    #     self.host = socket.gethostname()
-    #     self.serverPort = 8080
-    #     self.clientSocket = socket.socket()
-    #     self.clientSocket.connect((self.host, self.serverPort))
-    #     self.IP = self.clientSocket.getsockname()[0] + ":" + str(self.clientSocket.getsockname()[1])
+        self.scheduler1 = BackgroundScheduler()
+        self.scheduler1.start()
+        self.scheduler2 = BackgroundScheduler()
+        self.scheduler2.start()
 
     def request(self, message):
         start = time.time()
-        # self.clientSocket.send(message.encode())
-        # self.response = self.clientSocket.recv(1024).decode()
         self.response = requests.get(self.serverIP)
         end = time.time()
-        print(self.response)
         latency = end - start
         if self.metrics["min_latency"] == 0:
             self.metrics["min_latency"] = latency
@@ -80,45 +72,48 @@ class DriverNode:
             }
         }).encode("utf-8"))
         self.producer.flush()
-        print("published")
 
     def sendHeatbeat(self):
         self.producer.send("heartbeat", json.dumps({
             "node_id": self.id,
             "heartbeat": "YES"
         }).encode("utf-8"))
-        current_time = time.strftime("%H:%M:%S", time.localtime())
-        print(current_time)
-        print("sent", self.id)
+        self.producer.flush()
 
     def startTest(self, delay = 0):
         # self.connect()
+        time.sleep(1)
         self.register()
-        self.scheduler.add_job(self.sendHeatbeat, 'interval', seconds = 1)
-        while True:
+        self.scheduler1.add_job(self.sendHeatbeat, 'interval', seconds = 1)
+        for i in range(self.messageCount):
             self.request("Hi")
             self.publishMetrics()
             time.sleep(delay)
+        self.producer.send("heartbeat", json.dumps({
+            "node_id": self.id,
+            "heartbeat": "NO"
+        }).encode("utf-8"))
+        self.producer.flush()
+        
 
     def listen(self):
         for message in self.consumer:
+            data = json.loads(message.value.decode("utf-8"))
             if message.topic == "test_config":
-                data = json.loads(message.value.decode("utf-8"))
                 self.testID = data["test_id"]
                 self.testType = data["test_type"]
                 self.delay = data["test_message_delay"]
                 self.messageCount = data["message_count_per_driver"]
                 self.serverIP = data["target_server_ip"]
-                # print(data)
                 
             if message.topic == "trigger":
-                data = json.loads(message.value.decode("utf-8"))
-                # print(data)
                 if data["trigger"] == "YES":
                     if self.testType == "AVALANCHE":
                         self.startTest()
                     elif self.testType == "TSUNAMI":
                         self.startTest(self.delay)
+                    break
+
 
     def displayMetrics(self):
         print("Latencies:", self.latencies)

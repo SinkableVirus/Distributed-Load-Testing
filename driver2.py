@@ -1,4 +1,7 @@
 from DriverClass import DriverNode
 
-driver = DriverNode()
-driver.listen()
+try:
+    driver = DriverNode()
+    driver.listen()
+except KeyboardInterrupt:
+    print("Driver Stopped")
