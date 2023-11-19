@@ -29,7 +29,7 @@ class OrchestratorNode:
             self.delay = 0
         elif testType == "T":
             self.testType = "TSUNAMI"
-            self.delay = int(input("Enter the delay: "))
+            self.delay = float(input("Enter the delay: "))
             self.messageCount = int(input("Enter the message count per driver: "))
         self.producer.send("test_config", json.dumps({
             "test_id": self.testID,
