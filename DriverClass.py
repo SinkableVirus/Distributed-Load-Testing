@@ -90,7 +90,6 @@ class DriverNode:
     def startTest(self, delay = 0):
         time.sleep(1)
         self.register()
-        # self.scheduler1.add_job(self.sendHeatbeat, 'interval', seconds = 1)
         for i in range(self.messageCount):
             self.request("Hi")
             self.publishMetrics()
