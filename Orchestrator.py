@@ -8,9 +8,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 class OrchestratorNode:
     def __init__(self):
-        self.stop = 0
         self.metrics = {}
         self.heartbeat = {}
+        # self.allDriverNodes = []
         self.activeNodeCount = 0
         self.producer = KafkaProducer(bootstrap_servers = "localhost:9092")
         self.consumer = KafkaConsumer("register", "metrics", "heartbeat")
@@ -50,15 +50,15 @@ class OrchestratorNode:
 
 
     def printMetrics(self):
-        print(json.dumps(self.metrics, indent = 4))
+        print(json.dumps(self.heartbeat, indent = 4), flush = True)
     
     
     def checkHeartbeat(self):
         for i in self.heartbeat:
             if(time.time() - self.heartbeat[i] > 1.5):
-                print(f'Heartbeat from node {i} not received')
+                print(f'Heartbeat from node {i} not received', flush = True)
             else:
-                print(f'Heartbeat from node {i} received')
+                print(f'Heartbeat from node {i} received', flush = True)
 
 
     def listen(self):
@@ -68,27 +68,36 @@ class OrchestratorNode:
             if message.topic == "register":
                 self.metrics[data["node_id"]] = {}
                 self.activeNodeCount += 1
-                print('Driver node', data['node_id'], 'registered')
+                # if data["node_id"] not in self.allDriverNodes:
+                #     self.allDriverNodes.append(data["node_id"])
+                print('Driver node', data['node_id'], 'registered', flush = True)
                 
             if message.topic == "metrics":
                 self.metrics[data["node_id"]] = data["metrics"]
 
             if message.topic == "heartbeat":
-                self.heartbeat[data["node_id"]] = time.time()
+                if data["heartbeat"] == "YES":
+                    self.heartbeat[data["node_id"]] = time.time()
                 if data["heartbeat"] == "NO":
                     self.activeNodeCount -= 1
                     if self.activeNodeCount == 0:
+                        self.job1.remove()
+                        self.job2.remove()
                         self.printMetrics()
-                        exit(0)
+                        self.metrics = {}
+                        # self.heartbeat = {}
+                        break
 
 
 if __name__ == "__main__":
-    try:
-        orchestrator = OrchestratorNode()
-        orchestrator.testConfig()
-        orchestrator.trigger()
-        orchestrator.job1 = orchestrator.scheduler1.add_job(orchestrator.printMetrics, 'interval', seconds = 1)
-        orchestrator.job2 = orchestrator.scheduler2.add_job(orchestrator.checkHeartbeat, 'interval', seconds = 1)
-        orchestrator.listen()
-    except KeyboardInterrupt:
-        print("Orchestrator Stopped")
+    orchestrator = OrchestratorNode()
+    while True:
+        try:
+            orchestrator.testConfig()
+            orchestrator.trigger()
+            orchestrator.job1 = orchestrator.scheduler1.add_job(orchestrator.printMetrics, 'interval', seconds = 1)
+            orchestrator.job2 = orchestrator.scheduler2.add_job(orchestrator.checkHeartbeat, 'interval', seconds = 1)
+            orchestrator.listen()
+        except KeyboardInterrupt:
+            print("Orchestrator Stopped")
+            break
