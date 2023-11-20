@@ -15,7 +15,7 @@ from kafka import KafkaConsumer
 class DriverNode:
     def __init__(self):
         self.id = random.randint(1, 1000)
-        self.IP = "127.0.0.1"
+        self.IP = sys.argv[1]
         self.metrics = {
             "mean_latency": 0,
             "median_latency": 0,
