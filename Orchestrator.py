@@ -50,7 +50,7 @@ class OrchestratorNode:
 
 
     def printMetrics(self):
-        print(json.dumps(self.heartbeat, indent = 4), flush = True)
+        print(json.dumps(self.metrics, indent = 4), flush = True)
     
     
     def checkHeartbeat(self):

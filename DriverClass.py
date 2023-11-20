@@ -15,7 +15,7 @@ from kafka import KafkaConsumer
 class DriverNode:
     def __init__(self):
         self.id = random.randint(1, 1000)
-        self.IP = sys.argv[1]
+        self.IP = "127.0.0.1"
         self.metrics = {
             "mean_latency": 0,
             "median_latency": 0,
@@ -25,7 +25,7 @@ class DriverNode:
         }
         self.latencies = []
         self.totalLatency = 0
-        self.producer = KafkaProducer(bootstrap_servers = "localhost:9092")
+        self.producer = KafkaProducer(bootstrap_servers = sys.argv[1])
         self.consumer = KafkaConsumer("test_config", "trigger")
         self.scheduler1 = BackgroundScheduler()
         self.scheduler1.start()
@@ -115,6 +115,15 @@ class DriverNode:
                         self.startTest()
                     elif self.testType == "TSUNAMI":
                         self.startTest(self.delay)
+                    self.metrics = {
+                        "mean_latency": 0,
+                        "median_latency": 0,
+                        "min_latency": 0,
+                        "max_latency": 0,
+                        "number_of_requests": 0
+                    }
+                    self.latencies = []
+                    self.totalLatency = 0
                     break
 
 
