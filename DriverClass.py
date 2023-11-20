@@ -21,6 +21,7 @@ class DriverNode:
             "median_latency": 0,
             "min_latency": 0,
             "max_latency": 0,
+            "mode_latency": 0,
             "number_of_requests": 0
         }
         self.latencies = []
@@ -48,6 +49,7 @@ class DriverNode:
         self.totalLatency += latency
         self.metrics["mean_latency"] = self.totalLatency / len(self.latencies)
         self.metrics["median_latency"] = statistics.median(self.latencies)
+        self.metrics["mode_latency"] = statistics.mode(self.latencies)
         self.metrics["number_of_requests"] += 1
 
 
@@ -70,6 +72,7 @@ class DriverNode:
                 "median_latency": self.metrics["median_latency"],
                 "min_latency": self.metrics["min_latency"],
                 "max_latency": self.metrics["max_latency"],
+                "mode_latency": self.metrics["mode_latency"],
                 "number_of_requests": self.metrics["number_of_requests"]
             }
         }).encode("utf-8"))
@@ -120,6 +123,7 @@ class DriverNode:
                         "median_latency": 0,
                         "min_latency": 0,
                         "max_latency": 0,
+                        "mode_latency": 0,
                         "number_of_requests": 0
                     }
                     self.latencies = []
@@ -133,3 +137,5 @@ class DriverNode:
         print("Max:", self.metrics["max_latency"])
         print("Mean:", self.metrics["mean_latency"])
         print("Median:", self.metrics["median_latency"])
+        print("Mode:", self.metrics["mode_latency"])
+        

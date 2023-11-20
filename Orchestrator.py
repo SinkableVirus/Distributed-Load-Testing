@@ -4,6 +4,7 @@ import time
 from kafka import KafkaProducer
 from kafka import KafkaConsumer
 from apscheduler.schedulers.background import BackgroundScheduler
+import statistics
 
 
 class OrchestratorNode:
@@ -18,6 +19,22 @@ class OrchestratorNode:
         self.scheduler1.start()
         self.scheduler2 = BackgroundScheduler()
         self.scheduler2.start()
+
+        self.aggregated_metrics = {
+            "min_latency": [],
+            "max_latency": [],
+            "mean_latency": [],
+            "median_latency": [],
+            "mode_latency": []
+        }
+
+        self.overall_metrics = {
+            "min_latency": 0,
+            "max_latency": 0,
+            "mean_latency": 0,
+            "median_latency": 0,
+            "mode_latency": 0
+        }
 
 
     def testConfig(self):
@@ -50,7 +67,16 @@ class OrchestratorNode:
 
 
     def printMetrics(self):
+        print(" Driver Wise Metrics ")
+        print()
         print(json.dumps(self.metrics, indent = 4), flush = True)
+        print()
+
+        print(" Overall aggregated metrics ")
+        print(json.dumps(self.overall_metrics, indent = 4), flush = True)
+        print()
+
+
     
     
     def checkHeartbeat(self):
@@ -59,6 +85,7 @@ class OrchestratorNode:
                 print(f'Heartbeat from node {i} not received', flush = True)
             else:
                 print(f'Heartbeat from node {i} received', flush = True)
+
 
 
     def listen(self):
@@ -75,6 +102,20 @@ class OrchestratorNode:
             if message.topic == "metrics":
                 self.metrics[data["node_id"]] = data["metrics"]
 
+                self.aggregated_metrics['mean_latency'].append(data['metrics']['mean_latency'])
+                self.aggregated_metrics['min_latency'].append(data['metrics']['min_latency'])
+                self.aggregated_metrics['max_latency'].append(data['metrics']['max_latency'])
+                self.aggregated_metrics['median_latency'].append(data['metrics']['median_latency'])
+                self.aggregated_metrics['mode_latency'].append(data['metrics']['mode_latency'])
+
+
+                self.overall_metrics['mean_latency'] = statistics.mean(self.aggregated_metrics['mean_latency'])
+                self.overall_metrics['min_latency'] = min(self.aggregated_metrics['min_latency'])
+                self.overall_metrics['max_latency'] = max(self.aggregated_metrics['max_latency'])
+                self.overall_metrics['median_latency'] = statistics.mean(self.aggregated_metrics['median_latency'])
+                self.overall_metrics['mode_latency'] = statistics.mean(self.aggregated_metrics['mode_latency'])
+                
+
             if message.topic == "heartbeat":
                 if data["heartbeat"] == "YES":
                     self.heartbeat[data["node_id"]] = time.time()
@@ -86,7 +127,27 @@ class OrchestratorNode:
                         self.printMetrics()
                         self.metrics = {}
                         # self.heartbeat = {}
+
+                        self.aggregated_metrics = {
+                        "mean_latency": [],
+                        "median_latency": [],
+                        "min_latency": [],
+                        "max_latency": [],
+                        "mode_latency": [],
+                        }
+
+                        self.overall_metrics = {
+                        "mean_latency": 0,
+                        "median_latency": 0,
+                        "min_latency": 0,
+                        "max_latency": 0,
+                        "mode_latency": 0,
+                        }
+
+
                         break
+
+        
 
 
 if __name__ == "__main__":
