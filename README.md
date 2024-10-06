@@ -7,5 +7,5 @@ web server.
 
 # Command to start Zookeeper and Kafka
 
-*sudo /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
-*sudo /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
+* sudo /usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties &
+* sudo /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties &
